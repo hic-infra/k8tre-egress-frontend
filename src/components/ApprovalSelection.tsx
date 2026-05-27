@@ -2,14 +2,17 @@ import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 
 interface ApprovalSelectionProps {
   id: string;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export default function ApprovalSelection({ id }: ApprovalSelectionProps) {
+export default function ApprovalSelection({ id, value, onChange }: ApprovalSelectionProps) {
   return (
     <RadioGroup
       aria-labelledby={`${id}-label`}
-      defaultValue=""
+      value={value}
       name="radio-buttons-group"
+      onChange={(e) => onChange(e.target.value)}
     >
       <FormControlLabel
         value="approve"

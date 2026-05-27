@@ -8,4 +8,8 @@ const downloadFile = (projectId: string, fileId: string) => {
   return `${BASE_URL}/egress/${projectId}/${fileId}`;
 };
 
-export { getEgress, downloadFile };
+const approveFiles = (projectId: string) => {
+  return `${BASE_URL}/egress/${projectId}`;
+};
+
+export { getEgress, downloadFile, approveFiles };
