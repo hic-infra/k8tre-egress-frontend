@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
-import { approveFiles, downloadFile, getEgress } from "../apiRoutes";
+import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 
 
@@ -28,7 +28,7 @@ export default function EgressPage() {
   };
 
   const saveEgress = () => {
-    fetch(`${approveFiles(projectId)}`, {
+    authorizedFetch(`${approveFiles(projectId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(approvals),
@@ -36,9 +36,10 @@ export default function EgressPage() {
   }
 
   useEffect(() => {
-    fetch(getEgress(projectId))
+    authorizedFetch(getEgress(projectId))
     .then((r) => r.json())
-    .then((data: EgressFile[]) => {
+    .then((data: EgressFile[] | null) => {
+        if (!data) return;
         setFiles(data);
         setApprovals(
           Object.fromEntries(data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]))
@@ -49,8 +50,6 @@ export default function EgressPage() {
   useEffect(() => {
     console.log(files);
   }, [files]);
-
-  console.log(approvals);
 
   return (
     <Box sx={{ p: 2 }}>
