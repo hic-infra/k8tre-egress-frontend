@@ -1,9 +1,9 @@
 import Keycloak from "keycloak-js";
 
 const keycloakClient = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL,        // e.g. "https://auth.example.com"
-  realm: import.meta.env.VITE_KEYCLOAK_REALM,    // e.g. "myrealm"
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT, // e.g. "my-react-app"
+  url: import.meta.env.VITE_KEYCLOAK_URL,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM,
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT,
 });
 
 export function requireAuth() {
