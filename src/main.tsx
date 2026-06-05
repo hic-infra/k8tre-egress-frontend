@@ -12,13 +12,13 @@ keycloakReady.then(() => {
   }
 
   createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/egress/:id" element={<EgressPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>,
+    <StrictMode>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/egress/:id" element={<EgressPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </StrictMode>,
   );
 });

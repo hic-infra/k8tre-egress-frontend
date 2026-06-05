@@ -6,7 +6,11 @@ interface ApprovalSelectionProps {
   onChange: (value: string) => void;
 }
 
-export default function ApprovalSelection({ id, value, onChange }: ApprovalSelectionProps) {
+export default function ApprovalSelection({
+  id,
+  value,
+  onChange,
+}: ApprovalSelectionProps) {
   return (
     <RadioGroup
       aria-labelledby={`${id}-label`}

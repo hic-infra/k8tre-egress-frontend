@@ -22,7 +22,7 @@ async function getFreshToken(): Promise<string> {
 
 export async function authorizedFetch(
   input: RequestInfo,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<Response> {
   const token = await getFreshToken();
 
