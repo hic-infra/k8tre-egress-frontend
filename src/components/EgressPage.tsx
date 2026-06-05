@@ -12,9 +12,8 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
-import { approveFiles, downloadFile, getEgress } from "../apiRoutes";
+import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
-
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
@@ -28,20 +27,24 @@ export default function EgressPage() {
   };
 
   const saveEgress = () => {
-    fetch(`${approveFiles(projectId)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(approvals),
-        }).then(r => r.json()).then(console.log);
-  }
+    authorizedFetch(approveFiles(projectId), {
+      method: "PUT",
+      body: JSON.stringify(approvals),
+    })
+      .then((r) => r.json())
+      .then(console.log);
+  };
 
   useEffect(() => {
-    fetch(getEgress(projectId))
-    .then((r) => r.json())
-    .then((data: EgressFile[]) => {
+    authorizedFetch(getEgress(projectId))
+      .then((r) => r.json())
+      .then((data: EgressFile[] | null) => {
+        if (!data) return;
         setFiles(data);
         setApprovals(
-          Object.fromEntries(data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]))
+          Object.fromEntries(
+            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
+          ),
         );
       });
   }, [projectId]);
@@ -50,20 +53,18 @@ export default function EgressPage() {
     console.log(files);
   }, [files]);
 
-  console.log(approvals);
-
   return (
     <Box sx={{ p: 2 }}>
       <Box>
         <TableContainer component={Paper}>
           <Table aria-label="Table of files to egress">
             <TableHead>
-                <TableRow>
-                    <TableCell>Filename</TableCell>
-                    <TableCell>Size</TableCell>
-                    <TableCell>Approval Status</TableCell>
-                    <TableCell></TableCell>
-                </TableRow>
+              <TableRow>
+                <TableCell>Filename</TableCell>
+                <TableCell>Size</TableCell>
+                <TableCell>Approval Status</TableCell>
+                <TableCell></TableCell>
+              </TableRow>
             </TableHead>
             <TableBody>
               {files.map((f) => (
@@ -73,14 +74,23 @@ export default function EgressPage() {
                   </TableCell>
                   <TableCell>{f.size}</TableCell>
                   <TableCell>
-                    <ApprovalSelection id={f.id} value={approvals[f.id]} onChange={(value) => handleApprovalChange(f.id, value)}/>
+                    <ApprovalSelection
+                      id={f.id}
+                      value={approvals[f.id]}
+                      onChange={(value) => handleApprovalChange(f.id, value)}
+                    />
                   </TableCell>
                   <TableCell>
                     <Button
                       variant="contained"
-                      href={approvals[f.id] === "approve" ? downloadFile(id ?? "", f.id) : undefined}
+                      href={
+                        approvals[f.id] === "approve"
+                          ? downloadFile(id ?? "", f.id)
+                          : undefined
+                      }
                       disabled={approvals[f.id] !== "approve"}
-                      data-testid={`view-${f.id}`}>
+                      data-testid={`view-${f.id}`}
+                    >
                       View
                     </Button>
                   </TableCell>
@@ -91,7 +101,13 @@ export default function EgressPage() {
         </TableContainer>
       </Box>
       <Box sx={{ p: 2, justifyContent: "flex-start" }}>
-        <Button variant="contained" onClick={saveEgress} data-testid={"saveButton"}>Save</Button>
+        <Button
+          variant="contained"
+          onClick={saveEgress}
+          data-testid={"saveButton"}
+        >
+          Save
+        </Button>
       </Box>
     </Box>
   );

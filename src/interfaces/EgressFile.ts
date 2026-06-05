@@ -1,6 +1,6 @@
 export interface EgressApproval {
-    destination: string;
-    user_id: string;
+  destination: string;
+  user_id: string;
 }
 
 export interface EgressFile {

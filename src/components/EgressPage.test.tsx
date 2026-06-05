@@ -8,19 +8,24 @@ import EgressPage from "./EgressPage";
 import { approveFiles, getEgress } from "../apiRoutes";
 
 const mockFiles = [
-  { id: "1", file_name: "report.csv", size: "12KB", approvals: [{destination: "/", user_id: "3"}] },
+  {
+    id: "1",
+    file_name: "report.csv",
+    size: "12KB",
+    approvals: [{ destination: "/", user_id: "3" }],
+  },
   { id: "2", file_name: "data.json", size: "4KB", approvals: [] },
 ];
 
 const server = setupServer(
   http.get(getEgress("1"), () => HttpResponse.json(mockFiles)),
-  http.put(approveFiles("1"), () => HttpResponse.json({ ok: true }))
+  http.put(approveFiles("1"), () => HttpResponse.json({ ok: true })),
 );
 
 beforeAll(() => server.listen());
 afterEach(() => {
-    server.resetHandlers();
-    cleanup();
+  server.resetHandlers();
+  cleanup();
 });
 afterAll(() => server.close());
 
@@ -30,7 +35,7 @@ function renderEgressPage(projectId = "1") {
       <Routes>
         <Route path="/egress/:id" element={<EgressPage />} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -54,7 +59,7 @@ describe("EgressPage", () => {
 
     const enabledButton = screen.getByTestId(`view-${approvedFile.id}`);
     const unapprovedButton = screen.getByTestId(`view-${unapprovedFile.id}`);
-    
+
     expect(enabledButton).not.toBeDisabled();
     expect(unapprovedButton).toBeDisabled();
   });
@@ -65,7 +70,7 @@ describe("EgressPage", () => {
       http.put(approveFiles("1"), async ({ request }) => {
         capturedBody = await request.json();
         return HttpResponse.json({ ok: true });
-      })
+      }),
     );
 
     renderEgressPage();
