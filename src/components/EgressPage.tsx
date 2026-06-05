@@ -28,9 +28,8 @@ export default function EgressPage() {
   };
 
   const saveEgress = () => {
-    authorizedFetch(`${approveFiles(projectId)}`, {
+    authorizedFetch(approveFiles(projectId), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(approvals),
         }).then(r => r.json()).then(console.log);
   }
