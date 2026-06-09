@@ -16,6 +16,9 @@ import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 import type { EgressApprovalResponse } from "../interfaces/EgressApprovalResponse";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
+import type { BEErrorModalState } from "./BEErrorModal";
+import { getErrorMessage } from "../utils";
+import BEErrorModel from "./BEErrorModal";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
@@ -41,6 +44,10 @@ export default function EgressPage() {
     setSnackbarState(prev => ({ ...prev, open: false }));
   };
 
+  const [modalState, setModalState] = useState<BEErrorModalState>({
+    open: false,
+    message: "",
+  });
 
   const { id } = useParams();
 
@@ -63,14 +70,18 @@ export default function EgressPage() {
     authorizedFetch(getEgress(projectId))
       .then((r) => r.json())
       .then((data: EgressFile[] | null) => {
-        if (!data) return;
+        if (!data) {
+          setModalState({ open: true, message: "Fetch failed due to no data" });
+          return;
+        }
         setFiles(data);
         setApprovals(
           Object.fromEntries(
             data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
           ),
         );
-      });
+      })
+      .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
 
   useEffect(() => {
@@ -134,6 +145,11 @@ export default function EgressPage() {
         </Button>
         <FeedbackSnackbar {...snackbarState} onClose={handleClose}/>
       </Box>
+      <BEErrorModel
+        open={modalState.open}
+        handleClose={() => {}}
+        message={modalState.message}
+      />
     </Box>
   );
 }
