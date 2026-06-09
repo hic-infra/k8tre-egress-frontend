@@ -14,10 +14,17 @@ import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
 import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
+import BEErrorModel, { type BEErrorModalState } from "./BEErrorModal";
+import { getErrorMessage } from "../utils";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
+  const [modalState, setModalState] = useState<BEErrorModalState>({
+    open: false,
+    message: "",
+  });
+
   const { id } = useParams();
 
   const projectId = id ?? "";
@@ -39,14 +46,18 @@ export default function EgressPage() {
     authorizedFetch(getEgress(projectId))
       .then((r) => r.json())
       .then((data: EgressFile[] | null) => {
-        if (!data) return;
+        if (!data) {
+          setModalState({ open: true, message: "Fetch failed due to no data" });
+          return;
+        }
         setFiles(data);
         setApprovals(
           Object.fromEntries(
             data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
           ),
         );
-      });
+      })
+      .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
 
   useEffect(() => {
@@ -109,6 +120,11 @@ export default function EgressPage() {
           Save
         </Button>
       </Box>
+      <BEErrorModel
+        open={modalState.open}
+        handleClose={() => {}}
+        message={modalState.message}
+      />
     </Box>
   );
 }
