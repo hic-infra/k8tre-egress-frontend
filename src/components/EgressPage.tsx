@@ -14,7 +14,6 @@ import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
 import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
-import type { EgressApprovalResponse } from "../interfaces/EgressApprovalResponse";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
@@ -28,15 +27,6 @@ export default function EgressPage() {
     severity: 'success' | 'error';
     message: string;
   }>({ open: false, severity: 'success', message: '' });
-
-
-  const openSnackbar = (response: EgressApprovalResponse) => {    
-    if (response.message === "success") {
-      setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
-    } else {
-      setSnackbarState({open: true, message: response.message, severity: 'error'})
-    }
-  }
 
   const handleClose = (_: unknown, reason?: string) => {
     if (reason === 'clickaway') return;
@@ -63,7 +53,14 @@ export default function EgressPage() {
       body: JSON.stringify(approvals),
     })
       .then((r) => r.json())
-      .then((r) => openSnackbar(r));
+      .then((r) => {
+        if (r.message === "success") {
+          setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
+        }
+      })
+      .catch((e) => {
+        setSnackbarState({open: true, message: getErrorMessage(e), severity: 'error'})
+      });
   };
 
   useEffect(() => {

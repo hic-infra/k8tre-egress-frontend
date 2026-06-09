@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import EgressPage from "./EgressPage";
-import { approveFiles, getEgress } from "../apiRoutes";
+import { approveFiles, getEgress } from "../api";
 
 const mockFiles = [
   {

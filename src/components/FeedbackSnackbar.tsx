@@ -1,4 +1,4 @@
-import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
+import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
 type SnackbarSeverity = 'success' | 'error';
@@ -7,7 +7,7 @@ interface FeedbackSnackbarProps {
   open: boolean;
   severity: SnackbarSeverity;
   message: string;
-  onClose: (event: Event | React.SyntheticEvent<any, Event>, reason: SnackbarCloseReason) => void;
+  onClose: (event: Event | React.SyntheticEvent<any, Event>) => void;
 }
 
 export function FeedbackSnackbar({ open, severity, message, onClose }: FeedbackSnackbarProps) {
@@ -15,7 +15,6 @@ export function FeedbackSnackbar({ open, severity, message, onClose }: FeedbackS
     <Snackbar
       open={open}
       autoHideDuration={4000}
-      onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
       <Alert
