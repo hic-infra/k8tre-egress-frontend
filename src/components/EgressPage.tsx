@@ -14,12 +14,26 @@ import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
 import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
-import BEErrorModel, { type BEErrorModalState } from "./BEErrorModal";
+import { FeedbackSnackbar } from "./FeedbackSnackbar";
+import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
+import BEErrorModel from "./BEErrorModal";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
+  const [snackbarState, setSnackbarState] = useState<{
+    open: boolean;
+    severity: 'success' | 'error';
+    message: string;
+  }>({ open: false, severity: 'success', message: '' });
+
+  const handleClose = (_: unknown, reason?: string) => {
+    if (reason === 'clickaway') return;
+    
+    setSnackbarState(prev => ({ ...prev, open: false }));
+  };
+
   const [modalState, setModalState] = useState<BEErrorModalState>({
     open: false,
     message: "",
@@ -39,7 +53,14 @@ export default function EgressPage() {
       body: JSON.stringify(approvals),
     })
       .then((r) => r.json())
-      .then(console.log);
+      .then((r) => {
+        if (r.message === "success") {
+          setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
+        }
+      })
+      .catch((e) => {
+        setSnackbarState({open: true, message: getErrorMessage(e), severity: 'error'})
+      });
   };
 
   useEffect(() => {
@@ -119,6 +140,7 @@ export default function EgressPage() {
         >
           Save
         </Button>
+        <FeedbackSnackbar {...snackbarState} onClose={handleClose}/>
       </Box>
       <BEErrorModel
         open={modalState.open}
