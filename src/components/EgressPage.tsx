@@ -14,10 +14,34 @@ import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
 import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
+import type { EgressApprovalResponse } from "../interfaces/EgressApprovalResponse";
+import { FeedbackSnackbar } from "./FeedbackSnackbar";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
+  const [snackbarState, setSnackbarState] = useState<{
+    open: boolean;
+    severity: 'success' | 'error';
+    message: string;
+  }>({ open: false, severity: 'success', message: '' });
+
+
+  const openSnackbar = (response: EgressApprovalResponse) => {    
+    if (response.message === "success") {
+      setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
+    } else {
+      setSnackbarState({open: true, message: response.message, severity: 'error'})
+    }
+  }
+
+  const handleClose = (_: unknown, reason?: string) => {
+    if (reason === 'clickaway') return;
+    
+    setSnackbarState(prev => ({ ...prev, open: false }));
+  };
+
+
   const { id } = useParams();
 
   const projectId = id ?? "";
@@ -32,7 +56,7 @@ export default function EgressPage() {
       body: JSON.stringify(approvals),
     })
       .then((r) => r.json())
-      .then(console.log);
+      .then((r) => openSnackbar(r));
   };
 
   useEffect(() => {
@@ -108,6 +132,7 @@ export default function EgressPage() {
         >
           Save
         </Button>
+        <FeedbackSnackbar {...snackbarState} onClose={handleClose}/>
       </Box>
     </Box>
   );
