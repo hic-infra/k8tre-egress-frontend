@@ -3,9 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
 import EgressPage from "./EgressPage";
 import { approveFiles, getEgress } from "../api";
+
+vi.mock("../keycloak");
 
 const mockFiles = [
   {
