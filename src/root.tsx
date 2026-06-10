@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router";
-import keycloakClient, { requireAuth } from "./keycloak";
+import keycloakClient from "./keycloak";
 import { CircularProgress } from "@mui/material";
-
-export async function clientLoader() {
-  await requireAuth();
-}
 
 export default function Root() {
   const [ready, setReady] = useState(false);
@@ -20,7 +16,7 @@ export default function Root() {
       .then(() => setReady(true));
   }, []);
 
-  if (!ready) return <CircularProgress aria-label="Loading…" />; // or a loading spinner
+  if (!ready) return <CircularProgress aria-label="Loading…" />;
 
   return <Outlet />;
 }

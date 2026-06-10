@@ -8,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  type SnackbarCloseReason,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -29,7 +30,7 @@ export default function EgressPage() {
     message: string;
   }>({ open: false, severity: 'success', message: '' });
 
-  const handleClose = (_: unknown, reason?: string) => {
+  const handleClose = (_: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
     if (reason === 'clickaway') return;
     
     setSnackbarState(prev => ({ ...prev, open: false }));

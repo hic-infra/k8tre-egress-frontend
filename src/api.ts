@@ -1,4 +1,3 @@
-import { useCallback, useState } from "react";
 import keycloakClient from "./keycloak";
 
 const BASE_URL = import.meta.env.VITE_EGRESS_BE_URL ?? "http://localhost:8000";

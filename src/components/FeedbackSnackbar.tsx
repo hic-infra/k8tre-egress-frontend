@@ -7,7 +7,7 @@ interface FeedbackSnackbarProps {
   open: boolean;
   severity: SnackbarSeverity;
   message: string;
-  onClose: (event: Event | React.SyntheticEvent<any, Event>) => void;
+  onClose: (event: Event | React.SyntheticEvent<Element, Event>) => void;
 }
 
 export function FeedbackSnackbar({ open, severity, message, onClose }: FeedbackSnackbarProps) {
