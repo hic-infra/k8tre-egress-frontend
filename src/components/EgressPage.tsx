@@ -8,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  type SnackbarCloseReason,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -22,13 +23,14 @@ import BEErrorModel from "./BEErrorModal";
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
+  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>({});
   const [snackbarState, setSnackbarState] = useState<{
     open: boolean;
     severity: 'success' | 'error';
     message: string;
   }>({ open: false, severity: 'success', message: '' });
 
-  const handleClose = (_: unknown, reason?: string) => {
+  const handleClose = (_: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
     if (reason === 'clickaway') return;
     
     setSnackbarState(prev => ({ ...prev, open: false }));
@@ -55,6 +57,7 @@ export default function EgressPage() {
       .then((r) => r.json())
       .then((r) => {
         if (r.message === "success") {
+          setSavedApprovals({ ...approvals });
           setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
         }
       })
@@ -73,6 +76,11 @@ export default function EgressPage() {
         }
         setFiles(data);
         setApprovals(
+          Object.fromEntries(
+            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
+          ),
+        );
+        setSavedApprovals(
           Object.fromEntries(
             data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
           ),
@@ -116,11 +124,11 @@ export default function EgressPage() {
                     <Button
                       variant="contained"
                       href={
-                        approvals[f.id] === "approve"
+                        savedApprovals[f.id] === "approve"
                           ? downloadFile(id ?? "", f.id)
                           : undefined
                       }
-                      disabled={approvals[f.id] !== "approve"}
+                      disabled={savedApprovals[f.id] !== "approve"}
                       data-testid={`view-${f.id}`}
                     >
                       View
