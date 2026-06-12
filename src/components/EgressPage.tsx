@@ -19,6 +19,7 @@ import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
 import BEErrorModel from "./BEErrorModal";
+import type { EgressError } from "../interfaces/EgressError";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
@@ -68,7 +69,14 @@ export default function EgressPage() {
 
   useEffect(() => {
     authorizedFetch(getEgress(projectId))
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (r.ok) {
+          return r.json();
+        } else {
+          const message : EgressError = await r.json();
+          throw new Error(`Request failed: ${message.detail}`);
+        }
+      })
       .then((data: EgressFile[] | null) => {
         if (!data) {
           setModalState({ open: true, message: "Fetch failed due to no data" });
