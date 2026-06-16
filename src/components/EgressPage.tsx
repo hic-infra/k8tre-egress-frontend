@@ -113,10 +113,6 @@ export default function EgressPage() {
       .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
 
-  useEffect(() => {
-    console.log(files);
-  }, [files]);
-
   return (
     <Box sx={{ p: 2 }}>
       <Box>

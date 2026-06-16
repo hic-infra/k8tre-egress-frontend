@@ -81,7 +81,7 @@ describe("EgressPage", () => {
     await userEvent.click(screen.getByTestId("saveButton"));
 
     await waitFor(() => {
-      expect(capturedBody).toEqual({ "1": "approve", "2": "" });
+      expect(capturedBody).toEqual({ "1": {"status": "approve", "comment": ""}, "2": {"status": "", "comment": ""} });
     });
   });
 });
