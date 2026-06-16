@@ -26,17 +26,22 @@ export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
-  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>({});
+  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>(
+    {},
+  );
   const [snackbarState, setSnackbarState] = useState<{
     open: boolean;
-    severity: 'success' | 'error';
+    severity: "success" | "error";
     message: string;
-  }>({ open: false, severity: 'success', message: '' });
+  }>({ open: false, severity: "success", message: "" });
 
-  const handleClose = (_: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
-    if (reason === 'clickaway') return;
-    
-    setSnackbarState(prev => ({ ...prev, open: false }));
+  const handleClose = (
+    _: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === "clickaway") return;
+
+    setSnackbarState((prev) => ({ ...prev, open: false }));
   };
 
   const [modalState, setModalState] = useState<BEErrorModalState>({
@@ -54,15 +59,14 @@ export default function EgressPage() {
 
   const handleCommentChange = (fileId: string, value: string) => {
     setComments((prev) => ({ ...prev, [fileId]: value }));
-  }
+  };
 
   const saveEgress = () => {
-
     const body = Object.fromEntries(
-      Object.keys(approvals).map(key => [
+      Object.keys(approvals).map((key) => [
         key,
         { status: approvals[key], comment: comments[key] },
-      ])
+      ]),
     );
     authorizedFetch(approveFiles(projectId), {
       method: "PUT",
@@ -72,11 +76,19 @@ export default function EgressPage() {
       .then((r) => {
         if (r.message === "success") {
           setSavedApprovals({ ...approvals });
-          setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
+          setSnackbarState({
+            open: true,
+            message: "Update Successful",
+            severity: "success",
+          });
         }
       })
       .catch((e) => {
-        setSnackbarState({open: true, message: getErrorMessage(e), severity: 'error'})
+        setSnackbarState({
+          open: true,
+          message: getErrorMessage(e),
+          severity: "error",
+        });
       });
   };
 
@@ -86,7 +98,7 @@ export default function EgressPage() {
         if (r.ok) {
           return r.json();
         } else {
-          const message : EgressError = await r.json();
+          const message: EgressError = await r.json();
           throw new Error(`Request failed: ${message.detail}`);
         }
       })
@@ -106,9 +118,11 @@ export default function EgressPage() {
             data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
           ),
         );
-        setComments(Object.fromEntries(
+        setComments(
+          Object.fromEntries(
             data.map((f) => [f.id, f.approvals.pop()?.comment || ""]),
-          ),)
+          ),
+        );
       })
       .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
@@ -142,7 +156,14 @@ export default function EgressPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <TextField id="standard-basic" variant="standard" value={comments[f.id]} onChange={(value) => handleCommentChange(f.id, value.target.value)} />
+                    <TextField
+                      id="standard-basic"
+                      variant="standard"
+                      value={comments[f.id]}
+                      onChange={(value) =>
+                        handleCommentChange(f.id, value.target.value)
+                      }
+                    />
                   </TableCell>
                   <TableCell>
                     <Button
@@ -172,7 +193,7 @@ export default function EgressPage() {
         >
           Save
         </Button>
-        <FeedbackSnackbar {...snackbarState} onClose={handleClose}/>
+        <FeedbackSnackbar {...snackbarState} onClose={handleClose} />
       </Box>
       <BEErrorModel
         open={modalState.open}
