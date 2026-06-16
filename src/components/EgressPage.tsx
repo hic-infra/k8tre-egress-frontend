@@ -8,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   type SnackbarCloseReason,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ import type { EgressError } from "../interfaces/EgressError";
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<Record<string, string>>({});
   const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>({});
   const [snackbarState, setSnackbarState] = useState<{
     open: boolean;
@@ -50,10 +52,21 @@ export default function EgressPage() {
     setApprovals((prev) => ({ ...prev, [fileId]: value }));
   };
 
+  const handleCommentChange = (fileId: string, value: string) => {
+    setComments((prev) => ({ ...prev, [fileId]: value }));
+  }
+
   const saveEgress = () => {
+
+    const body = Object.fromEntries(
+      Object.keys(approvals).map(key => [
+        key,
+        { status: approvals[key], comment: comments[key] },
+      ])
+    );
     authorizedFetch(approveFiles(projectId), {
       method: "PUT",
-      body: JSON.stringify(approvals),
+      body: JSON.stringify(body),
     })
       .then((r) => r.json())
       .then((r) => {
@@ -93,6 +106,9 @@ export default function EgressPage() {
             data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
           ),
         );
+        setComments(Object.fromEntries(
+            data.map((f) => [f.id, f.approvals.pop()?.comment || ""]),
+          ),)
       })
       .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
@@ -111,6 +127,7 @@ export default function EgressPage() {
                 <TableCell>Filename</TableCell>
                 <TableCell>Size</TableCell>
                 <TableCell>Approval Status</TableCell>
+                <TableCell>Comments</TableCell>
                 <TableCell></TableCell>
               </TableRow>
             </TableHead>
@@ -127,6 +144,9 @@ export default function EgressPage() {
                       value={approvals[f.id]}
                       onChange={(value) => handleApprovalChange(f.id, value)}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <TextField id="standard-basic" variant="standard" value={comments[f.id]} onChange={(value) => handleCommentChange(f.id, value.target.value)} />
                   </TableCell>
                   <TableCell>
                     <Button
