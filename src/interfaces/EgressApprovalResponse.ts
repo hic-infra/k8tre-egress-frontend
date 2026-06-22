@@ -1,5 +1,5 @@
 interface EgressApprovalResponse {
-    message: string;
+  message: string;
 }
 
-export type { EgressApprovalResponse }
+export type { EgressApprovalResponse };

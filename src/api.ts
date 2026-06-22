@@ -2,15 +2,15 @@ import keycloakClient from "./keycloak";
 
 const BASE_URL = import.meta.env.VITE_EGRESS_BE_URL ?? "http://localhost:8000";
 
-const getEgress = (projectId: string) => {
+const getEgressURL = (projectId: string) => {
   return `${BASE_URL}/egress/${projectId}`;
 };
 
-const downloadFile = (projectId: string, fileId: string) => {
+const downloadFileURL = (projectId: string, fileId: string) => {
   return `${BASE_URL}/egress/${projectId}/${fileId}`;
 };
 
-const approveFiles = (projectId: string) => {
+const approveFilesURL = (projectId: string) => {
   return `${BASE_URL}/egress/${projectId}`;
 };
 
@@ -35,4 +35,4 @@ export async function authorizedFetch(
   });
 }
 
-export { getEgress, downloadFile, approveFiles };
+export { getEgressURL, downloadFileURL, approveFilesURL };
