@@ -13,7 +13,12 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
-import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
+import {
+  approveFilesURL,
+  authorizedFetch,
+  downloadFileURL,
+  getEgressURL,
+} from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
@@ -24,17 +29,22 @@ import type { EgressError } from "../interfaces/EgressError";
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
   const [approvals, setApprovals] = useState<Record<string, string>>({});
-  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>({});
+  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>(
+    {},
+  );
   const [snackbarState, setSnackbarState] = useState<{
     open: boolean;
-    severity: 'success' | 'error';
+    severity: "success" | "error";
     message: string;
-  }>({ open: false, severity: 'success', message: '' });
+  }>({ open: false, severity: "success", message: "" });
 
-  const handleClose = (_: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
-    if (reason === 'clickaway') return;
-    
-    setSnackbarState(prev => ({ ...prev, open: false }));
+  const handleClose = (
+    _: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === "clickaway") return;
+
+    setSnackbarState((prev) => ({ ...prev, open: false }));
   };
 
   const [modalState, setModalState] = useState<BEErrorModalState>({
@@ -51,7 +61,7 @@ export default function EgressPage() {
   };
 
   const saveEgress = () => {
-    authorizedFetch(approveFiles(projectId), {
+    authorizedFetch(approveFilesURL(projectId), {
       method: "PUT",
       body: JSON.stringify(approvals),
     })
@@ -59,21 +69,55 @@ export default function EgressPage() {
       .then((r) => {
         if (r.message === "success") {
           setSavedApprovals({ ...approvals });
-          setSnackbarState({open: true, message: "Update Successful", severity: 'success'})
+          setSnackbarState({
+            open: true,
+            message: "Update Successful",
+            severity: "success",
+          });
         }
       })
       .catch((e) => {
-        setSnackbarState({open: true, message: getErrorMessage(e), severity: 'error'})
+        setSnackbarState({
+          open: true,
+          message: getErrorMessage(e),
+          severity: "error",
+        });
+      });
+  };
+
+  const downloadFile = async (
+    projectId: string,
+    fileId: string,
+    filename: string,
+  ) => {
+    authorizedFetch(downloadFileURL(projectId, fileId), {
+      method: "GET",
+    })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((e) => {
+        setSnackbarState({
+          open: true,
+          message: getErrorMessage(e),
+          severity: "error",
+        });
       });
   };
 
   useEffect(() => {
-    authorizedFetch(getEgress(projectId))
+    authorizedFetch(getEgressURL(projectId))
       .then(async (r) => {
         if (r.ok) {
           return r.json();
         } else {
-          const message : EgressError = await r.json();
+          const message: EgressError = await r.json();
           throw new Error(`Request failed: ${message.detail}`);
         }
       })
@@ -96,10 +140,6 @@ export default function EgressPage() {
       })
       .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
   }, [projectId]);
-
-  useEffect(() => {
-    console.log(files);
-  }, [files]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -131,9 +171,9 @@ export default function EgressPage() {
                   <TableCell>
                     <Button
                       variant="contained"
-                      href={
+                      onClick={() =>
                         savedApprovals[f.id] === "approve"
-                          ? downloadFile(id ?? "", f.id)
+                          ? downloadFile(id ?? "", f.id, f.file_name)
                           : undefined
                       }
                       disabled={savedApprovals[f.id] !== "approve"}
@@ -156,7 +196,7 @@ export default function EgressPage() {
         >
           Save
         </Button>
-        <FeedbackSnackbar {...snackbarState} onClose={handleClose}/>
+        <FeedbackSnackbar {...snackbarState} onClose={handleClose} />
       </Box>
       <BEErrorModel
         open={modalState.open}

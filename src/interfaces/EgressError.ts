@@ -1,5 +1,5 @@
 interface EgressError {
-    detail: string;
+  detail: string;
 }
 
-export type { EgressError }
+export type { EgressError };
