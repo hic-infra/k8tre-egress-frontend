@@ -13,7 +13,12 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
-import { approveFilesURL, authorizedFetch, downloadFileURL, getEgressURL } from "../api";
+import {
+  approveFilesURL,
+  authorizedFetch,
+  downloadFileURL,
+  getEgressURL,
+} from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
@@ -80,22 +85,30 @@ export default function EgressPage() {
       });
   };
 
-  const downloadFile = async (projectId: string, fileId: string, filename: string) => {
-    const response = await authorizedFetch(downloadFileURL(projectId, fileId), {
-      method: 'GET',
-    });
-
-    if (!response.ok) throw new Error('Download failed');
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    URL.revokeObjectURL(url);
+  const downloadFile = async (
+    projectId: string,
+    fileId: string,
+    filename: string,
+  ) => {
+    authorizedFetch(downloadFileURL(projectId, fileId), {
+      method: "GET",
+    })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((e) => {
+        setSnackbarState({
+          open: true,
+          message: "Download failed",
+          severity: "error",
+        });
+      });
   };
 
   useEffect(() => {
@@ -158,7 +171,7 @@ export default function EgressPage() {
                   <TableCell>
                     <Button
                       variant="contained"
-                      onClick={ () =>
+                      onClick={() =>
                         savedApprovals[f.id] === "approve"
                           ? downloadFile(id ?? "", f.id, f.file_name)
                           : undefined
