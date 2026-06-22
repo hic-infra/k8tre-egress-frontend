@@ -105,7 +105,7 @@ export default function EgressPage() {
       .catch((e) => {
         setSnackbarState({
           open: true,
-          message: "Download failed",
+          message: getErrorMessage(e),
           severity: "error",
         });
       });
