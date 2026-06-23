@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# frontend-egress
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React/TypeScript frontend for the [HIC Egress Backend](https://github.com/hic-infra/k8tre-egress-backend), providing an interface for
+viewing and reviewing files a researcher wishes to egress.
 
-Currently, two official plugins are available:
+Built with React, TypeScript, Material UI, and Keycloak for authentication, it communicates with the egress backend to present pending file requests and to manage approvals.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Requirements
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 18+
+- A running instance of the [HIC Egress Backend](https://github.com/hic-infra/k8tre-egress-backend)
+- A Keycloak realm with a configured client for this frontend
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 1. Clone the repository
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/hic-infra/k8tre-egress-frontend
+cd frontend-egress
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Configure environment
+
+Copy the example environment file and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description |
+|---|---|
+| `VITE_KEYCLOAK_URL` | Keycloak server URL, e.g. `https://auth.example.com` |
+| `VITE_KEYCLOAK_REALM` | Keycloak realm name |
+| `VITE_KEYCLOAK_CLIENT` | Keycloak client ID for this app |
+| `VITE_EGRESS_BE_URL` | Base URL of the egress backend API |
+
+### 4. Start the dev server
+
+```bash
+npm run dev
+```
+
+The app is served at `http://localhost:5173` by default.
+
+---
+
+## Development
+
+### Running tests
+
+Tests are written with [Vitest](https://vitest.dev/) and [MSW](https://mswjs.io/) for API mocking.
+
+```bash
+npm run test          # run all tests
+```
+
+---
+
+## Deployment
+
+The app is a static Vite build and can be deployed anywhere that serves static files.
+
+### Build
+
+```bash
+npm run build
+# output in dist/
+```
+
+---
