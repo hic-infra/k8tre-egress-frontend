@@ -1,3 +1,4 @@
+import { NetworkError } from "./errors";
 import keycloakClient from "./keycloak";
 
 const BASE_URL = import.meta.env.VITE_EGRESS_BE_URL ?? "http://localhost:8000";
@@ -24,15 +25,18 @@ export async function authorizedFetch(
   init: RequestInit = {},
 ): Promise<Response> {
   const token = await getFreshToken();
-
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...init.headers,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    return await fetch(input, {
+      ...init,
+      headers: {
+        ...init.headers,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch {
+    throw new NetworkError();
+  }
 }
 
 export { getEgressURL, downloadFileURL, approveFilesURL };

@@ -25,6 +25,7 @@ import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
 import BEErrorModel from "./BEErrorModal";
 import type { EgressError } from "../interfaces/EgressError";
+import { NetworkError } from "../errors";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
@@ -114,12 +115,16 @@ export default function EgressPage() {
   useEffect(() => {
     authorizedFetch(getEgressURL(projectId))
       .then(async (r) => {
-        if (r.ok) {
-          return r.json();
-        } else {
-          const message: EgressError = await r.json();
-          throw new Error(`Request failed: ${message.detail}`);
+        if (r.ok) return r.json();
+
+        let errorMessage: string;
+        try {
+          const body: EgressError = await r.json();
+          errorMessage = body.detail;
+        } catch {
+          errorMessage = await r.text();
         }
+        throw new Error(`Request failed: ${errorMessage}`);
       })
       .then((data: EgressFile[] | null) => {
         if (!data) {
@@ -127,18 +132,19 @@ export default function EgressPage() {
           return;
         }
         setFiles(data);
-        setApprovals(
-          Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
-          ),
+        const approvalState = Object.fromEntries(
+          data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
         );
-        setSavedApprovals(
-          Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
-          ),
-        );
+        setApprovals(approvalState);
+        setSavedApprovals(approvalState);
       })
-      .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
+      .catch((e) => {
+        if (e instanceof NetworkError) {
+          setModalState({ open: true, message: "Cannot connect to backend" });
+        } else {
+          setModalState({ open: true, message: getErrorMessage(e) });
+        }
+      });
   }, [projectId]);
 
   return (
