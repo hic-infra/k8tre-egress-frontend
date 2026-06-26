@@ -128,4 +128,26 @@ describe("EgressPage", () => {
     expect(clickSpy).toHaveBeenCalled();
     expect(revokeSpy).toHaveBeenCalledWith("blob:mock-url");
   });
+
+  it("shows a connection error when the backend is unreachable", async () => {
+    server.use(http.get(getEgressURL("1"), () => HttpResponse.error()));
+    renderEgressPage();
+    await waitFor(() => {
+      expect(screen.getByText("Cannot connect to backend")).toBeInTheDocument();
+    });
+  });
+
+  it("shows an error message when the backend returns a 500", async () => {
+    server.use(
+      http.get(getEgressURL("1"), () =>
+        HttpResponse.json({ detail: "Internal server error" }, { status: 500 }),
+      ),
+    );
+    renderEgressPage();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Request failed: Internal server error"),
+      ).toBeInTheDocument();
+    });
+  });
 });

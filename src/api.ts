@@ -34,7 +34,7 @@ export async function authorizedFetch(
         "Content-Type": "application/json",
       },
     });
-  } catch (e) {
+  } catch {
     throw new NetworkError();
   }
 }
