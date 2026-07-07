@@ -22,7 +22,7 @@ const mockFiles = [
     id: "1",
     file_name: "report.csv",
     size: "12KB",
-    approvals: [{ destination: "/", user_id: "3" }],
+    approvals: [{ destination: "/", user_id: "3", comment: "Example" }],
   },
   { id: "2", file_name: "data.json", size: "4KB", approvals: [] },
 ];
@@ -89,7 +89,10 @@ describe("EgressPage", () => {
     await userEvent.click(screen.getByTestId("saveButton"));
 
     await waitFor(() => {
-      expect(capturedBody).toEqual({ "1": "approve", "2": "" });
+      expect(capturedBody).toEqual({
+        "1": { status: "approve", comment: "Example" },
+        "2": { status: "", comment: "" },
+      });
     });
   });
 
