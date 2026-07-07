@@ -7,7 +7,7 @@ import keycloakClient, { keycloakReady } from "./keycloak.ts";
 
 keycloakReady.then(() => {
   if (!keycloakClient.authenticated) {
-    keycloakClient.login();
+    keycloakClient.login({ redirectUri: window.location.href });
     return;
   }
 

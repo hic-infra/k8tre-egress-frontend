@@ -1,16 +1,17 @@
+import { NetworkError } from "./errors";
 import keycloakClient from "./keycloak";
 
 const BASE_URL = import.meta.env.VITE_EGRESS_BE_URL ?? "http://localhost:8000";
 
-const getEgress = (projectId: string) => {
+const getEgressURL = (projectId: string) => {
   return `${BASE_URL}/egress/${projectId}`;
 };
 
-const downloadFile = (projectId: string, fileId: string) => {
+const downloadFileURL = (projectId: string, fileId: string) => {
   return `${BASE_URL}/egress/${projectId}/${fileId}`;
 };
 
-const approveFiles = (projectId: string) => {
+const approveFilesURL = (projectId: string) => {
   return `${BASE_URL}/egress/${projectId}`;
 };
 
@@ -24,15 +25,18 @@ export async function authorizedFetch(
   init: RequestInit = {},
 ): Promise<Response> {
   const token = await getFreshToken();
-
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...init.headers,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    return await fetch(input, {
+      ...init,
+      headers: {
+        ...init.headers,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch {
+    throw new NetworkError();
+  }
 }
 
-export { getEgress, downloadFile, approveFiles };
+export { getEgressURL, downloadFileURL, approveFilesURL };

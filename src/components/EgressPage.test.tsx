@@ -13,7 +13,7 @@ import {
   vi,
 } from "vitest";
 import EgressPage from "./EgressPage";
-import { approveFiles, getEgress } from "../api";
+import { approveFilesURL, downloadFileURL, getEgressURL } from "../api";
 
 vi.mock("../keycloak");
 
@@ -28,8 +28,8 @@ const mockFiles = [
 ];
 
 const server = setupServer(
-  http.get(getEgress("1"), () => HttpResponse.json(mockFiles)),
-  http.put(approveFiles("1"), () => HttpResponse.json({ ok: true })),
+  http.get(getEgressURL("1"), () => HttpResponse.json(mockFiles)),
+  http.put(approveFilesURL("1"), () => HttpResponse.json({ ok: true })),
 );
 
 beforeAll(() => server.listen());
@@ -77,7 +77,7 @@ describe("EgressPage", () => {
   it("calls PUT with current approvals when Save is clicked", async () => {
     let capturedBody: unknown;
     server.use(
-      http.put(approveFiles("1"), async ({ request }) => {
+      http.put(approveFilesURL("1"), async ({ request }) => {
         capturedBody = await request.json();
         return HttpResponse.json({ ok: true });
       }),
@@ -93,6 +93,64 @@ describe("EgressPage", () => {
         "1": { status: "approve", comment: "" },
         "2": { status: "", comment: "" },
       });
+    });
+  });
+
+  it("downloads a file with the correct filename", async () => {
+    const anchor = document.createElement("a");
+    const clickSpy = vi.spyOn(anchor, "click").mockImplementation(() => {});
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      if (tag === "a") return anchor;
+      return originalCreateElement(tag);
+    });
+    URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    URL.revokeObjectURL = vi.fn();
+    const revokeSpy = vi.spyOn(URL, "revokeObjectURL");
+
+    server.use(
+      http.get(downloadFileURL("1", "1"), () => {
+        return new HttpResponse(
+          new Blob(["file content"], { type: "application/pdf" }),
+          {
+            headers: {
+              "Content-Disposition": 'attachment; filename="report.csv"',
+            },
+          },
+        );
+      }),
+    );
+    renderEgressPage();
+    await screen.findByText("report.csv"); // wait for data to load
+    const approvedFile = mockFiles[0];
+    const enabledButton = screen.getByTestId(`view-${approvedFile.id}`);
+    await userEvent.click(enabledButton);
+
+    expect(anchor.download).toBe("report.csv");
+    expect(anchor.href).toBe("blob:mock-url");
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeSpy).toHaveBeenCalledWith("blob:mock-url");
+  });
+
+  it("shows a connection error when the backend is unreachable", async () => {
+    server.use(http.get(getEgressURL("1"), () => HttpResponse.error()));
+    renderEgressPage();
+    await waitFor(() => {
+      expect(screen.getByText("Cannot connect to backend")).toBeInTheDocument();
+    });
+  });
+
+  it("shows an error message when the backend returns a 500", async () => {
+    server.use(
+      http.get(getEgressURL("1"), () =>
+        HttpResponse.json({ detail: "Internal server error" }, { status: 500 }),
+      ),
+    );
+    renderEgressPage();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Request failed: Internal server error"),
+      ).toBeInTheDocument();
     });
   });
 });

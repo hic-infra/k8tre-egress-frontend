@@ -14,13 +14,19 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import type { EgressFile } from "../interfaces/EgressFile";
-import { approveFiles, authorizedFetch, downloadFile, getEgress } from "../api";
+import {
+  approveFilesURL,
+  authorizedFetch,
+  downloadFileURL,
+  getEgressURL,
+} from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
 import BEErrorModel from "./BEErrorModal";
 import type { EgressError } from "../interfaces/EgressError";
+import { NetworkError } from "../errors";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
@@ -68,7 +74,7 @@ export default function EgressPage() {
         { status: approvals[key], comment: comments[key] },
       ]),
     );
-    authorizedFetch(approveFiles(projectId), {
+    authorizedFetch(approveFilesURL(projectId), {
       method: "PUT",
       body: JSON.stringify(body),
     })
@@ -92,15 +98,45 @@ export default function EgressPage() {
       });
   };
 
+  const downloadFile = async (
+    projectId: string,
+    fileId: string,
+    filename: string,
+  ) => {
+    authorizedFetch(downloadFileURL(projectId, fileId), {
+      method: "GET",
+    })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((e) => {
+        setSnackbarState({
+          open: true,
+          message: getErrorMessage(e),
+          severity: "error",
+        });
+      });
+  };
+
   useEffect(() => {
-    authorizedFetch(getEgress(projectId))
+    authorizedFetch(getEgressURL(projectId))
       .then(async (r) => {
-        if (r.ok) {
-          return r.json();
-        } else {
-          const message: EgressError = await r.json();
-          throw new Error(`Request failed: ${message.detail}`);
+        if (r.ok) return r.json();
+
+        let errorMessage: string;
+        try {
+          const body: EgressError = await r.json();
+          errorMessage = body.detail;
+        } catch {
+          errorMessage = await r.text();
         }
+        throw new Error(`Request failed: ${errorMessage}`);
       })
       .then((data: EgressFile[] | null) => {
         if (!data) {
@@ -108,23 +144,24 @@ export default function EgressPage() {
           return;
         }
         setFiles(data);
-        setApprovals(
-          Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
-          ),
-        );
-        setSavedApprovals(
-          Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
-          ),
+        const approvalState = Object.fromEntries(
+          data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
         );
         setComments(
           Object.fromEntries(
             data.map((f) => [f.id, f.approvals.pop()?.comment || ""]),
           ),
         );
+        setApprovals(approvalState);
+        setSavedApprovals(approvalState);
       })
-      .catch((e) => setModalState({ open: true, message: getErrorMessage(e) }));
+      .catch((e) => {
+        if (e instanceof NetworkError) {
+          setModalState({ open: true, message: "Cannot connect to backend" });
+        } else {
+          setModalState({ open: true, message: getErrorMessage(e) });
+        }
+      });
   }, [projectId]);
 
   return (
@@ -168,9 +205,9 @@ export default function EgressPage() {
                   <TableCell>
                     <Button
                       variant="contained"
-                      href={
+                      onClick={() =>
                         savedApprovals[f.id] === "approve"
-                          ? downloadFile(id ?? "", f.id)
+                          ? downloadFile(id ?? "", f.id, f.file_name)
                           : undefined
                       }
                       disabled={savedApprovals[f.id] !== "approve"}
