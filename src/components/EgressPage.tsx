@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -19,17 +20,20 @@ import {
   authorizedFetch,
   downloadFileURL,
   getEgressURL,
+  handleEgressResponse,
 } from "../api";
 import ApprovalSelection from "./ApprovalSelection";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
 import type { BEErrorModalState } from "./BEErrorModal";
 import { getErrorMessage } from "../utils";
 import BEErrorModel from "./BEErrorModal";
-import type { EgressError } from "../interfaces/EgressError";
 import { NetworkError } from "../errors";
+import AuditTrailDialog from "./AuditTrail";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
+  const [auditTrailDialogState, setAuditTrailDialogState] = useState<{open: boolean; fileId: string;}>({ open: false, fileId: "0" });
+
   const [approvals, setApprovals] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>(
@@ -41,7 +45,7 @@ export default function EgressPage() {
     message: string;
   }>({ open: false, severity: "success", message: "" });
 
-  const handleClose = (
+  const handleSnackbarClose = (
     _: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
@@ -49,6 +53,10 @@ export default function EgressPage() {
 
     setSnackbarState((prev) => ({ ...prev, open: false }));
   };
+
+  const handleAuditTrailClose = () => {
+    setAuditTrailDialogState({open: false, fileId: "0"});
+  }
 
   const [modalState, setModalState] = useState<BEErrorModalState>({
     open: false,
@@ -66,6 +74,11 @@ export default function EgressPage() {
   const handleCommentChange = (fileId: string, value: string) => {
     setComments((prev) => ({ ...prev, [fileId]: value }));
   };
+
+  const figureApprovalStatus = (f: EgressFile) => {
+    // TODO: Generalize this for mulitple approvals
+    return f.approvals.at(0)?.action || "reject"
+  }
 
   const saveEgress = () => {
     const body = Object.fromEntries(
@@ -126,30 +139,19 @@ export default function EgressPage() {
 
   useEffect(() => {
     authorizedFetch(getEgressURL(projectId))
-      .then(async (r) => {
-        if (r.ok) return r.json();
-
-        let errorMessage: string;
-        try {
-          const body: EgressError = await r.json();
-          errorMessage = body.detail;
-        } catch {
-          errorMessage = await r.text();
-        }
-        throw new Error(`Request failed: ${errorMessage}`);
-      })
-      .then((data: EgressFile[] | null) => {
+      .then((r) => handleEgressResponse<EgressFile[] | null>(r))
+      .then((data) => {
         if (!data) {
           setModalState({ open: true, message: "Fetch failed due to no data" });
           return;
         }
         setFiles(data);
         const approvalState = Object.fromEntries(
-          data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
+          data.map((f) => [f.id, figureApprovalStatus(f)]),
         );
         setComments(
           Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.pop()?.comment || ""]),
+            data.map((f) => [f.id, f.approvals.at(-1)?.comment || ""]),
           ),
         );
         setApprovals(approvalState);
@@ -163,6 +165,7 @@ export default function EgressPage() {
         }
       });
   }, [projectId]);
+
 
   return (
     <Box sx={{ p: 2 }}>
@@ -203,18 +206,29 @@ export default function EgressPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="contained"
-                      onClick={() =>
-                        savedApprovals[f.id] === "approve"
-                          ? downloadFile(id ?? "", f.id, f.file_name)
-                          : undefined
-                      }
-                      disabled={savedApprovals[f.id] !== "approve"}
-                      data-testid={`view-${f.id}`}
-                    >
-                      View
-                    </Button>
+                    <Stack spacing={1}>
+                      <Button
+                        variant="contained"
+                        onClick={() =>
+                          savedApprovals[f.id] === "approve"
+                            ? downloadFile(id ?? "", f.id, f.file_name)
+                            : undefined
+                        }
+                        disabled={savedApprovals[f.id] !== "approve"}
+                        data-testid={`view-${f.id}`}
+                      >
+                        Download
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={() =>
+                          setAuditTrailDialogState({open: true, fileId: f.id})
+                        }
+                        data-testid={`auditTrail-${f.id}`}
+                      >
+                      View Audit Trail
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -230,13 +244,14 @@ export default function EgressPage() {
         >
           Save
         </Button>
-        <FeedbackSnackbar {...snackbarState} onClose={handleClose} />
+        <FeedbackSnackbar {...snackbarState} onClose={handleSnackbarClose} />
       </Box>
       <BEErrorModel
         open={modalState.open}
         handleClose={() => {}}
         message={modalState.message}
       />
+      <AuditTrailDialog projectId={projectId} open={auditTrailDialogState.open} fileId={auditTrailDialogState.fileId} onClose={handleAuditTrailClose} />
     </Box>
   );
 }

@@ -2,6 +2,7 @@ export interface EgressApproval {
   destination: string;
   user_id: string;
   comment: string;
+  action: string;
 }
 
 export interface EgressFile {
