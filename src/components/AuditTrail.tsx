@@ -46,18 +46,16 @@ const [errorMessage, setErrorMessage] = useState("");
         setAuditTrail(data.filter((value) => value.file_id === fileId));
       })
       .catch((e) => {
-        if (e instanceof NetworkError) {
-            setErrorMessage(e.message);
-        } else {
-          setErrorMessage("An error occurred");
-        }
+        setErrorMessage(e.message);
       });
   }, [projectId, fileId, open]);
-
-  if (auditTrail.length > 0) {
     return (
         <Dialog open={open} onClose={onClose}>
-        <TableContainer component={Paper}>
+        {errorMessage ? (<Paper sx={{p : 2}}>
+            <Typography variant="h6">{errorMessage}</Typography>
+        </Paper>
+        ) :
+        (<TableContainer component={Paper}>
             <Table aria-label="File Audit History">
             <TableHead>
                 <TableRow>
@@ -80,15 +78,7 @@ const [errorMessage, setErrorMessage] = useState("");
                 ))}
             </TableBody>
             </Table>
-        </TableContainer>
+        </TableContainer>)}
         </Dialog>
     );
-  } else {
-        return (<Dialog open={open} onClose={onClose}>
-            <Paper sx = {{p : 2}}>
-                <Typography>{errorMessage}</Typography>
-            </Paper>
-        </Dialog>)
-  }
-
 }
