@@ -215,5 +215,15 @@ describe("EgressPage", () => {
     await waitFor(() => {
       expect(screen.getAllByText("Approval")).toHaveLength(2);
     });
+
+    await userEvent.click(screen.getByTestId(`auditTrail-${unapprovedFile.id}`));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Rejection")).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Approval")).not.toBeInTheDocument();
+    });
   });
 });
