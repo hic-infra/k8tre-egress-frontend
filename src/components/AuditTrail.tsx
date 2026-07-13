@@ -1,5 +1,5 @@
 import {
-    Box,
+  Box,
   Dialog,
   Paper,
   Table,
@@ -32,8 +32,7 @@ export default function AuditTrailDialog({
     [],
   );
 
-const [errorMessage, setErrorMessage] = useState("");
-
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -49,36 +48,38 @@ const [errorMessage, setErrorMessage] = useState("");
         setErrorMessage(e.message);
       });
   }, [projectId, fileId, open]);
-    return (
-        <Dialog open={open} onClose={onClose}>
-        {errorMessage ? (<Paper sx={{p : 2}}>
-            <Typography variant="h6">{errorMessage}</Typography>
+  return (
+    <Dialog open={open} onClose={onClose}>
+      {errorMessage ? (
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6">{errorMessage}</Typography>
         </Paper>
-        ) :
-        (<TableContainer component={Paper}>
-            <Table aria-label="File Audit History">
+      ) : (
+        <TableContainer component={Paper}>
+          <Table aria-label="File Audit History">
             <TableHead>
-                <TableRow>
+              <TableRow>
                 <TableCell>Action</TableCell>
                 <TableCell>Time</TableCell>
                 <TableCell>User ID</TableCell>
                 <TableCell>Comment</TableCell>
-                </TableRow>
+              </TableRow>
             </TableHead>
             <TableBody>
-                {auditTrail.map((audit) => (
+              {auditTrail.map((audit) => (
                 <TableRow key={audit.datetime}>
-                    <TableCell component="th" scope="row">
+                  <TableCell component="th" scope="row">
                     {audit.action}
-                    </TableCell>
-                    <TableCell>{audit.datetime}</TableCell>
-                    <TableCell>{audit.user_id}</TableCell>
-                    <TableCell>{audit.comment}</TableCell>
+                  </TableCell>
+                  <TableCell>{audit.datetime}</TableCell>
+                  <TableCell>{audit.user_id}</TableCell>
+                  <TableCell>{audit.comment}</TableCell>
                 </TableRow>
-                ))}
+              ))}
             </TableBody>
-            </Table>
-        </TableContainer>)}
-        </Dialog>
-    );
+          </Table>
+        </TableContainer>
+      )}
+    </Dialog>
+  );
 }

@@ -216,7 +216,9 @@ describe("EgressPage", () => {
       expect(screen.getAllByText("Approval")).toHaveLength(2);
     });
 
-    await userEvent.click(screen.getByTestId(`auditTrail-${unapprovedFile.id}`));
+    await userEvent.click(
+      screen.getByTestId(`auditTrail-${unapprovedFile.id}`),
+    );
 
     await waitFor(() => {
       expect(screen.getAllByText("Rejection")).toHaveLength(1);
@@ -236,7 +238,9 @@ describe("EgressPage", () => {
     await userEvent.click(screen.getByTestId(`auditTrail-${approvedFile.id}`));
 
     await waitFor(() => {
-      expect(screen.queryByText("Cannot connect to server")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Cannot connect to server"),
+      ).toBeInTheDocument();
     });
   });
 });
