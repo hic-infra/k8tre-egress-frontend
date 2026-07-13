@@ -8,234 +8,141 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   type SnackbarCloseReason,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
-import type { EgressFile } from "../interfaces/EgressFile";
-import {
-  approveFilesURL,
-  authorizedFetch,
-  downloadFileURL,
-  getEgressURL,
-} from "../api";
-import ApprovalSelection from "./ApprovalSelection";
+import { downloadFileURL, authorizedFetch } from "../api";
+import { useEgressFiles } from "../hooks/useEgressFiles";
+import EgressFileRow from "./EgressFileRow";
 import { FeedbackSnackbar } from "./FeedbackSnackbar";
-import type { BEErrorModalState } from "./BEErrorModal";
-import { getErrorMessage } from "../utils";
 import BEErrorModel from "./BEErrorModal";
-import type { EgressError } from "../interfaces/EgressError";
-import { NetworkError } from "../errors";
+import AuditTrailDialog from "./AuditTrail";
+import { getErrorMessage } from "../utils";
 
 export default function EgressPage() {
-  const [files, setFiles] = useState<EgressFile[]>([]);
-  const [approvals, setApprovals] = useState<Record<string, string>>({});
-  const [comments, setComments] = useState<Record<string, string>>({});
-  const [savedApprovals, setSavedApprovals] = useState<Record<string, string>>(
-    {},
-  );
+  const { id } = useParams();
+  const projectId = id ?? "";
+  const {
+    files,
+    approvals,
+    comments,
+    savedApprovals,
+    error,
+    setApproval,
+    setComment,
+    save,
+  } = useEgressFiles(projectId);
+
+  const [auditTrailDialogState, setAuditTrailDialogState] = useState<{
+    open: boolean;
+    fileId: string;
+  }>({
+    open: false,
+    fileId: "0",
+  });
   const [snackbarState, setSnackbarState] = useState<{
     open: boolean;
     severity: "success" | "error";
     message: string;
-  }>({ open: false, severity: "success", message: "" });
+  }>({
+    open: false,
+    severity: "success",
+    message: "",
+  });
 
-  const handleClose = (
+  const handleSnackbarClose = (
     _: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
     if (reason === "clickaway") return;
-
     setSnackbarState((prev) => ({ ...prev, open: false }));
   };
 
-  const [modalState, setModalState] = useState<BEErrorModalState>({
-    open: false,
-    message: "",
-  });
-
-  const { id } = useParams();
-
-  const projectId = id ?? "";
-
-  const handleApprovalChange = (fileId: string, value: string) => {
-    setApprovals((prev) => ({ ...prev, [fileId]: value }));
+  const handleSave = async () => {
+    const result = await save();
+    setSnackbarState({
+      open: true,
+      message: result.message,
+      severity: result.ok ? "success" : "error",
+    });
   };
 
-  const handleCommentChange = (fileId: string, value: string) => {
-    setComments((prev) => ({ ...prev, [fileId]: value }));
-  };
-
-  const saveEgress = () => {
-    const body = Object.fromEntries(
-      Object.keys(approvals).map((key) => [
-        key,
-        { status: approvals[key], comment: comments[key] },
-      ]),
-    );
-    authorizedFetch(approveFilesURL(projectId), {
-      method: "PUT",
-      body: JSON.stringify(body),
-    })
-      .then((r) => r.json())
-      .then((r) => {
-        if (r.message === "success") {
-          setSavedApprovals({ ...approvals });
-          setSnackbarState({
-            open: true,
-            message: "Update Successful",
-            severity: "success",
-          });
-        }
-      })
-      .catch((e) => {
-        setSnackbarState({
-          open: true,
-          message: getErrorMessage(e),
-          severity: "error",
-        });
+  const downloadFile = async (fileId: string, filename: string) => {
+    try {
+      const r = await authorizedFetch(downloadFileURL(projectId, fileId), {
+        method: "GET",
       });
-  };
-
-  const downloadFile = async (
-    projectId: string,
-    fileId: string,
-    filename: string,
-  ) => {
-    authorizedFetch(downloadFileURL(projectId, fileId), {
-      method: "GET",
-    })
-      .then((r) => r.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch((e) => {
-        setSnackbarState({
-          open: true,
-          message: getErrorMessage(e),
-          severity: "error",
-        });
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setSnackbarState({
+        open: true,
+        message: getErrorMessage(e),
+        severity: "error",
       });
+    }
   };
-
-  useEffect(() => {
-    authorizedFetch(getEgressURL(projectId))
-      .then(async (r) => {
-        if (r.ok) return r.json();
-
-        let errorMessage: string;
-        try {
-          const body: EgressError = await r.json();
-          errorMessage = body.detail;
-        } catch {
-          errorMessage = await r.text();
-        }
-        throw new Error(`Request failed: ${errorMessage}`);
-      })
-      .then((data: EgressFile[] | null) => {
-        if (!data) {
-          setModalState({ open: true, message: "Fetch failed due to no data" });
-          return;
-        }
-        setFiles(data);
-        const approvalState = Object.fromEntries(
-          data.map((f) => [f.id, f.approvals.length > 0 ? "approve" : ""]),
-        );
-        setComments(
-          Object.fromEntries(
-            data.map((f) => [f.id, f.approvals.pop()?.comment || ""]),
-          ),
-        );
-        setApprovals(approvalState);
-        setSavedApprovals(approvalState);
-      })
-      .catch((e) => {
-        if (e instanceof NetworkError) {
-          setModalState({ open: true, message: "Cannot connect to backend" });
-        } else {
-          setModalState({ open: true, message: getErrorMessage(e) });
-        }
-      });
-  }, [projectId]);
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box>
-        <TableContainer component={Paper}>
-          <Table aria-label="Table of files to egress">
-            <TableHead>
-              <TableRow>
-                <TableCell>Filename</TableCell>
-                <TableCell>Size</TableCell>
-                <TableCell>Approval Status</TableCell>
-                <TableCell>Comments</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {files.map((f) => (
-                <TableRow key={f.id}>
-                  <TableCell component="th" scope="row">
-                    {f.file_name}
-                  </TableCell>
-                  <TableCell>{f.size}</TableCell>
-                  <TableCell>
-                    <ApprovalSelection
-                      id={f.id}
-                      value={approvals[f.id]}
-                      onChange={(value) => handleApprovalChange(f.id, value)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      id="standard-basic"
-                      variant="standard"
-                      value={comments[f.id]}
-                      onChange={(value) =>
-                        handleCommentChange(f.id, value.target.value)
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      onClick={() =>
-                        savedApprovals[f.id] === "approve"
-                          ? downloadFile(id ?? "", f.id, f.file_name)
-                          : undefined
-                      }
-                      disabled={savedApprovals[f.id] !== "approve"}
-                      data-testid={`view-${f.id}`}
-                    >
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-      <Box sx={{ p: 2, justifyContent: "flex-start" }}>
+      <TableContainer component={Paper}>
+        <Table aria-label="Table of files to egress">
+          <TableHead>
+            <TableRow>
+              <TableCell>Filename</TableCell>
+              <TableCell>Size</TableCell>
+              <TableCell>Approval Status</TableCell>
+              <TableCell>Comments</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {files.map((f) => (
+              <EgressFileRow
+                key={f.id}
+                file={f}
+                approval={approvals[f.id]}
+                comment={comments[f.id]}
+                isSavedApproved={savedApprovals[f.id] === "approve"}
+                onApprovalChange={setApproval}
+                onCommentChange={setComment}
+                onDownload={downloadFile}
+                onViewAuditTrail={(fileId) =>
+                  setAuditTrailDialogState({ open: true, fileId })
+                }
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Box sx={{ p: 2 }}>
         <Button
           variant="contained"
-          onClick={saveEgress}
-          data-testid={"saveButton"}
+          onClick={handleSave}
+          data-testid="saveButton"
         >
           Save
         </Button>
-        <FeedbackSnackbar {...snackbarState} onClose={handleClose} />
+        <FeedbackSnackbar {...snackbarState} onClose={handleSnackbarClose} />
       </Box>
+
       <BEErrorModel
-        open={modalState.open}
+        open={!!error}
         handleClose={() => {}}
-        message={modalState.message}
+        message={error ?? ""}
+      />
+      <AuditTrailDialog
+        projectId={projectId}
+        open={auditTrailDialogState.open}
+        fileId={auditTrailDialogState.fileId}
+        onClose={() => setAuditTrailDialogState({ open: false, fileId: "0" })}
       />
     </Box>
   );
