@@ -1,5 +1,4 @@
 import {
-  Box,
   Dialog,
   Paper,
   Table,
@@ -12,7 +11,6 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { auditTrailURL, authorizedFetch, handleEgressResponse } from "../api";
-import { NetworkError } from "../errors";
 import type { EgressAuditTrailEntry } from "../interfaces/EgressAuditTrail";
 
 interface AuditTrailDialogProps {
