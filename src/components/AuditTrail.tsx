@@ -1,4 +1,5 @@
 import {
+    Box,
   Dialog,
   Paper,
   Table,
@@ -7,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { auditTrailURL, authorizedFetch, handleEgressResponse } from "../api";
@@ -30,6 +32,9 @@ export default function AuditTrailDialog({
     [],
   );
 
+const [errorMessage, setErrorMessage] = useState("");
+
+
   useEffect(() => {
     if (!open) return;
     authorizedFetch(auditTrailURL(projectId))
@@ -42,38 +47,48 @@ export default function AuditTrailDialog({
       })
       .catch((e) => {
         if (e instanceof NetworkError) {
+            setErrorMessage(e.message);
         } else {
-          // TODO: Handle errors
+          setErrorMessage("An error occurred");
         }
       });
   }, [projectId, fileId, open]);
 
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <TableContainer component={Paper}>
-        <Table aria-label="File Audit History">
-          <TableHead>
-            <TableRow>
-              <TableCell>Action</TableCell>
-              <TableCell>Time</TableCell>
-              <TableCell>User ID</TableCell>
-              <TableCell>Comment</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {auditTrail.map((audit) => (
-              <TableRow key={audit.datetime}>
-                <TableCell component="th" scope="row">
-                  {audit.action}
-                </TableCell>
-                <TableCell>{audit.datetime}</TableCell>
-                <TableCell>{audit.user_id}</TableCell>
-                <TableCell>{audit.comment}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Dialog>
-  );
+  if (auditTrail.length > 0) {
+    return (
+        <Dialog open={open} onClose={onClose}>
+        <TableContainer component={Paper}>
+            <Table aria-label="File Audit History">
+            <TableHead>
+                <TableRow>
+                <TableCell>Action</TableCell>
+                <TableCell>Time</TableCell>
+                <TableCell>User ID</TableCell>
+                <TableCell>Comment</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {auditTrail.map((audit) => (
+                <TableRow key={audit.datetime}>
+                    <TableCell component="th" scope="row">
+                    {audit.action}
+                    </TableCell>
+                    <TableCell>{audit.datetime}</TableCell>
+                    <TableCell>{audit.user_id}</TableCell>
+                    <TableCell>{audit.comment}</TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </TableContainer>
+        </Dialog>
+    );
+  } else {
+        return (<Dialog open={open} onClose={onClose}>
+            <Paper sx = {{p : 2}}>
+                <Typography>{errorMessage}</Typography>
+            </Paper>
+        </Dialog>)
+  }
+
 }

@@ -226,4 +226,17 @@ describe("EgressPage", () => {
       expect(screen.queryByText("Approval")).not.toBeInTheDocument();
     });
   });
+
+  it("shows an error if the audit trail connection fails", async () => {
+    server.use(http.get(auditTrailURL("1"), () => HttpResponse.error()));
+    renderEgressPage();
+    await screen.findByText("report.csv");
+    const approvedFile = mockFiles[0];
+
+    await userEvent.click(screen.getByTestId(`auditTrail-${approvedFile.id}`));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Cannot connect to server")).toBeInTheDocument();
+    });
+  });
 });
