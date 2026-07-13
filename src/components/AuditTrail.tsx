@@ -31,13 +31,14 @@ export default function AuditTrailDialog({
   );
 
   useEffect(() => {
+    if (!open) return;
     authorizedFetch(auditTrailURL(projectId))
       .then((r) => handleEgressResponse<EgressAuditTrailEntry[] | null>(r))
       .then((data) => {
         if (!data) {
           return;
         }
-        setAuditTrail(data.filter((value) => value.file_id == fileId));
+        setAuditTrail(data.filter((value) => value.file_id === fileId));
       })
       .catch((e) => {
         if (e instanceof NetworkError) {

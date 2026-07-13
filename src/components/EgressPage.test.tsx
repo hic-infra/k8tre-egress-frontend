@@ -13,7 +13,12 @@ import {
   vi,
 } from "vitest";
 import EgressPage from "./EgressPage";
-import { approveFilesURL, downloadFileURL, getEgressURL } from "../api";
+import {
+  approveFilesURL,
+  auditTrailURL,
+  downloadFileURL,
+  getEgressURL,
+} from "../api";
 
 vi.mock("../keycloak");
 
@@ -22,14 +27,59 @@ const mockFiles = [
     id: "1",
     file_name: "report.csv",
     size: "12KB",
-    approvals: [{ destination: "/", user_id: "3", comment: "Example" }],
+    approvals: [
+      { action: "approve", destination: "/", user_id: "3", comment: "Example" },
+    ],
   },
   { id: "2", file_name: "data.json", size: "4KB", approvals: [] },
 ];
 
+const auditTrail = [
+  {
+    action: "Approval",
+    comment: "",
+    datetime: "2026-07-07T12:51:10.252099Z",
+    destination: "/",
+    file_id: "1",
+    user_id: "user1",
+  },
+  {
+    action: "Download",
+    comment: "",
+    datetime: "2026-07-07T12:51:10.284137Z",
+    destination: "/",
+    file_id: "1",
+    user_id: "",
+  },
+  {
+    action: "Rejection",
+    comment: "",
+    datetime: "2026-07-07T12:51:10.297991Z",
+    destination: "/",
+    file_id: "1",
+    user_id: "user1",
+  },
+  {
+    action: "Approval",
+    comment: "",
+    datetime: "2026-07-07T12:51:52.456408Z",
+    destination: "/",
+    file_id: "1",
+    user_id: "user1",
+  },
+  {
+    action: "Rejection",
+    comment: "",
+    datetime: "2026-07-07T12:54:10.297991Z",
+    destination: "/",
+    file_id: "2",
+    user_id: "user1",
+  },
+];
 const server = setupServer(
   http.get(getEgressURL("1"), () => HttpResponse.json(mockFiles)),
   http.put(approveFilesURL("1"), () => HttpResponse.json({ ok: true })),
+  http.get(auditTrailURL("1"), () => HttpResponse.json(auditTrail)),
 );
 
 beforeAll(() => server.listen());
@@ -91,7 +141,7 @@ describe("EgressPage", () => {
     await waitFor(() => {
       expect(capturedBody).toEqual({
         "1": { status: "approve", comment: "Example" },
-        "2": { status: "", comment: "" },
+        "2": { status: "reject", comment: "" },
       });
     });
   });
@@ -151,6 +201,19 @@ describe("EgressPage", () => {
       expect(
         screen.getByText("Request failed: Internal server error"),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("shows the audit trail when the audit trail button is clicked", async () => {
+    renderEgressPage();
+    await screen.findByText("report.csv");
+    const approvedFile = mockFiles[0];
+    const unapprovedFile = mockFiles[1];
+
+    await userEvent.click(screen.getByTestId(`auditTrail-${approvedFile.id}`));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Approval")).toHaveLength(2);
     });
   });
 });
