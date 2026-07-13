@@ -34,8 +34,6 @@ export default function AuditTrailDialog({
     authorizedFetch(auditTrailURL(projectId))
       .then((r) => handleEgressResponse<EgressAuditTrailEntry[] | null>(r))
       .then((data) => {
-        console.log(data);
-        console.log(fileId);
         if (!data) {
           return;
         }
@@ -47,7 +45,7 @@ export default function AuditTrailDialog({
           // TODO: Handle errors
         }
       });
-  }, [projectId]);
+  }, [projectId, fileId]);
 
   return (
     <Dialog open={open} onClose={onClose}>
