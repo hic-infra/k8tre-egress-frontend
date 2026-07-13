@@ -1,18 +1,34 @@
-import { Dialog, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import {
+  Dialog,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { auditTrailURL, authorizedFetch, handleEgressResponse } from "../api";
 import { NetworkError } from "../errors";
 import type { EgressAuditTrailEntry } from "../interfaces/EgressAuditTrail";
 
 interface AuditTrailDialogProps {
-    projectId: string;
-    fileId: string;
-    open: boolean;
-    onClose(): void
+  projectId: string;
+  fileId: string;
+  open: boolean;
+  onClose(): void;
 }
 
-export default function AuditTrailDialog({ projectId, fileId, open, onClose, } : AuditTrailDialogProps) {
-  const [auditTrail, setAuditTrail] = useState<Array<EgressAuditTrailEntry>>([]);
+export default function AuditTrailDialog({
+  projectId,
+  fileId,
+  open,
+  onClose,
+}: AuditTrailDialogProps) {
+  const [auditTrail, setAuditTrail] = useState<Array<EgressAuditTrailEntry>>(
+    [],
+  );
 
   useEffect(() => {
     authorizedFetch(auditTrailURL(projectId))
@@ -21,43 +37,44 @@ export default function AuditTrailDialog({ projectId, fileId, open, onClose, } :
         console.log(data);
         console.log(fileId);
         if (!data) {
-            return
+          return;
         }
         setAuditTrail(data.filter((value) => value.file_id == fileId));
-      }).catch((e) => {
+      })
+      .catch((e) => {
         if (e instanceof NetworkError) {
         } else {
-            // TODO: Handle errors
+          // TODO: Handle errors
         }
       });
   }, [projectId]);
 
-    return (
+  return (
     <Dialog open={open} onClose={onClose}>
-    <TableContainer component={Paper}>
-          <Table aria-label="File Audit History">
-            <TableHead>
-              <TableRow>
-                <TableCell>Action</TableCell>
-                <TableCell>Time</TableCell>
-                <TableCell>User ID</TableCell>
-                <TableCell>Comment</TableCell>
+      <TableContainer component={Paper}>
+        <Table aria-label="File Audit History">
+          <TableHead>
+            <TableRow>
+              <TableCell>Action</TableCell>
+              <TableCell>Time</TableCell>
+              <TableCell>User ID</TableCell>
+              <TableCell>Comment</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {auditTrail.map((audit) => (
+              <TableRow key={audit.datetime}>
+                <TableCell component="th" scope="row">
+                  {audit.action}
+                </TableCell>
+                <TableCell>{audit.datetime}</TableCell>
+                <TableCell>{audit.user_id}</TableCell>
+                <TableCell>{audit.comment}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-                {auditTrail.map((audit) => (
-                <TableRow key={audit.datetime}>
-                  <TableCell component="th" scope="row">
-                    {audit.action}
-                  </TableCell>
-                  <TableCell>{audit.datetime}</TableCell>
-                  <TableCell>{audit.user_id}</TableCell>
-                  <TableCell>{audit.comment}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        </Dialog>
-    );
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Dialog>
+  );
 }

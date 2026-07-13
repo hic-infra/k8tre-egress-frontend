@@ -17,8 +17,8 @@ const approveFilesURL = (projectId: string) => {
 };
 
 const auditTrailURL = (projectId: string) => {
-    return `${BASE_URL}/egress/audit/${projectId}`;
-}
+  return `${BASE_URL}/egress/audit/${projectId}`;
+};
 
 async function getFreshToken(): Promise<string> {
   await keycloakClient.updateToken(30);

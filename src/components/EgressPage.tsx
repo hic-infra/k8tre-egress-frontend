@@ -32,7 +32,10 @@ import AuditTrailDialog from "./AuditTrail";
 
 export default function EgressPage() {
   const [files, setFiles] = useState<EgressFile[]>([]);
-  const [auditTrailDialogState, setAuditTrailDialogState] = useState<{open: boolean; fileId: string;}>({ open: false, fileId: "0" });
+  const [auditTrailDialogState, setAuditTrailDialogState] = useState<{
+    open: boolean;
+    fileId: string;
+  }>({ open: false, fileId: "0" });
 
   const [approvals, setApprovals] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -55,8 +58,8 @@ export default function EgressPage() {
   };
 
   const handleAuditTrailClose = () => {
-    setAuditTrailDialogState({open: false, fileId: "0"});
-  }
+    setAuditTrailDialogState({ open: false, fileId: "0" });
+  };
 
   const [modalState, setModalState] = useState<BEErrorModalState>({
     open: false,
@@ -77,8 +80,8 @@ export default function EgressPage() {
 
   const figureApprovalStatus = (f: EgressFile) => {
     // TODO: Generalize this for mulitple approvals
-    return f.approvals.at(0)?.action || "reject"
-  }
+    return f.approvals.at(0)?.action || "reject";
+  };
 
   const saveEgress = () => {
     const body = Object.fromEntries(
@@ -166,7 +169,6 @@ export default function EgressPage() {
       });
   }, [projectId]);
 
-
   return (
     <Box sx={{ p: 2 }}>
       <Box>
@@ -222,11 +224,11 @@ export default function EgressPage() {
                       <Button
                         variant="contained"
                         onClick={() =>
-                          setAuditTrailDialogState({open: true, fileId: f.id})
+                          setAuditTrailDialogState({ open: true, fileId: f.id })
                         }
                         data-testid={`auditTrail-${f.id}`}
                       >
-                      View Audit Trail
+                        View Audit Trail
                       </Button>
                     </Stack>
                   </TableCell>
@@ -251,7 +253,12 @@ export default function EgressPage() {
         handleClose={() => {}}
         message={modalState.message}
       />
-      <AuditTrailDialog projectId={projectId} open={auditTrailDialogState.open} fileId={auditTrailDialogState.fileId} onClose={handleAuditTrailClose} />
+      <AuditTrailDialog
+        projectId={projectId}
+        open={auditTrailDialogState.open}
+        fileId={auditTrailDialogState.fileId}
+        onClose={handleAuditTrailClose}
+      />
     </Box>
   );
 }
