@@ -45,7 +45,7 @@ export default function AuditTrailDialog({
           // TODO: Handle errors
         }
       });
-  }, [projectId, fileId]);
+  }, [projectId, fileId, open]);
 
   return (
     <Dialog open={open} onClose={onClose}>
