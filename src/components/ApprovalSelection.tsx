@@ -17,6 +17,7 @@ export default function ApprovalSelection({
       value={value}
       name="radio-buttons-group"
       onChange={(e) => onChange(e.target.value)}
+      data-testid={`approval-${id}`}
     >
       <FormControlLabel
         value="approve"
