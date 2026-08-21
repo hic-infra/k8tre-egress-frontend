@@ -25,7 +25,6 @@ export default function EgressFileRow({
   onDownload,
   onViewAuditTrail,
 }: Props) {
-  console.log(commentErrors);
   return (
     <TableRow>
       <TableCell component="th" scope="row">
