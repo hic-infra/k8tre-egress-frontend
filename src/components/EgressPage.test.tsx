@@ -136,12 +136,25 @@ describe("EgressPage", () => {
     renderEgressPage();
     await screen.findByText("report.csv");
 
+    // Create a comment
+    const approvedFile = mockFiles[0];
+    const unapprovedFile = mockFiles[1];
+    const commentField = screen.getByTestId(`comment-${approvedFile.id}`);
+    const input = commentField.querySelector("input");
+    await userEvent.clear(input);
+
+    await userEvent.type(input, "An example comment");
+
+    const commentField2 = screen.getByTestId(`comment-${unapprovedFile.id}`);
+    const input2 = commentField2.querySelector("input");
+    await userEvent.type(input2, "An example comment");
+
     await userEvent.click(screen.getByTestId("saveButton"));
 
     await waitFor(() => {
       expect(capturedBody).toEqual({
-        "1": { status: "approve", comment: "Example" },
-        "2": { status: "reject", comment: "" },
+        "1": { status: "approve", comment: "An example comment" },
+        "2": { status: "reject", comment: "An example comment" },
       });
     });
   });
@@ -242,5 +255,24 @@ describe("EgressPage", () => {
         screen.queryByText("Cannot connect to server"),
       ).toBeInTheDocument();
     });
+  });
+
+  it("shows an error if an approval/rejection is submitted with no comment", async () => {
+    renderEgressPage();
+    await screen.findByText("report.csv");
+    const approvedFile = mockFiles[0];
+
+    const container = screen.getByTestId(`approval-${approvedFile.id}`);
+
+    // Get radio buttons within this container
+    const rejectRadio = container.querySelector('input[value="reject"]');
+    await userEvent.click(rejectRadio);
+    const commentField = screen.getByTestId(`comment-${approvedFile.id}`);
+    const input = commentField.querySelector("input");
+    await userEvent.clear(input);
+
+    await userEvent.click(screen.getByTestId("saveButton"));
+
+    expect(input).toHaveAttribute("aria-invalid", "true");
   });
 });

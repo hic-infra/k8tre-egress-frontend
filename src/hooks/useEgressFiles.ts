@@ -20,6 +20,9 @@ export function useEgressFiles(projectId: string) {
     {},
   );
   const [error, setError] = useState<string | null>(null);
+  const [commentErrors, setCommentErrors] = useState<Record<string, boolean>>(
+    {},
+  );
 
   useEffect(() => {
     authorizedFetch(getEgressURL(projectId))
@@ -84,14 +87,28 @@ export function useEgressFiles(projectId: string) {
     }
   }, [approvals, comments, projectId]);
 
+  // If a file is approved or rejected, it requires a comment
+  // This function validates this
+  const validateComments = useCallback(() => {
+    return Object.fromEntries(
+      Object.entries(approvals).map(([key, value]) => [
+        key,
+        value !== "" && comments[key] !== "",
+      ]),
+    );
+  }, [approvals, comments]);
+
   return {
     files,
     approvals,
     comments,
     savedApprovals,
     error,
+    commentErrors,
     setApproval,
     setComment,
     save,
+    validateComments,
+    setCommentErrors,
   };
 }

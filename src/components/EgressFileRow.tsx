@@ -7,6 +7,7 @@ interface Props {
   approval: string;
   comment: string;
   isSavedApproved: boolean;
+  commentErrors: Record<string, boolean>;
   onApprovalChange: (fileId: string, value: string) => void;
   onCommentChange: (fileId: string, value: string) => void;
   onDownload: (fileId: string, filename: string) => void;
@@ -18,6 +19,7 @@ export default function EgressFileRow({
   approval,
   comment,
   isSavedApproved,
+  commentErrors,
   onApprovalChange,
   onCommentChange,
   onDownload,
@@ -38,9 +40,11 @@ export default function EgressFileRow({
       </TableCell>
       <TableCell>
         <TextField
+          error={!commentErrors[file.id]}
           variant="standard"
           value={comment}
           onChange={(e) => onCommentChange(file.id, e.target.value)}
+          data-testid={`comment-${file.id}`}
         />
       </TableCell>
       <TableCell>

@@ -29,9 +29,12 @@ export default function EgressPage() {
     comments,
     savedApprovals,
     error,
+    commentErrors,
     setApproval,
     setComment,
     save,
+    validateComments,
+    setCommentErrors,
   } = useEgressFiles(projectId);
 
   const [auditTrailDialogState, setAuditTrailDialogState] = useState<{
@@ -60,12 +63,25 @@ export default function EgressPage() {
   };
 
   const handleSave = async () => {
-    const result = await save();
-    setSnackbarState({
-      open: true,
-      message: result.message,
-      severity: result.ok ? "success" : "error",
-    });
+    // Check every approved file has a comment
+    const commentExists = await validateComments();
+    const valid = Object.values(commentExists).every(Boolean);
+    setCommentErrors(commentExists);
+
+    if (valid) {
+      const result = await save();
+      setSnackbarState({
+        open: true,
+        message: result.message,
+        severity: result.ok ? "success" : "error",
+      });
+    } else {
+      setSnackbarState({
+        open: true,
+        message: "All approved or rejected files must have a comment",
+        severity: "error",
+      });
+    }
   };
 
   const downloadFile = async (fileId: string, filename: string) => {
@@ -110,6 +126,7 @@ export default function EgressPage() {
                 approval={approvals[f.id]}
                 comment={comments[f.id]}
                 isSavedApproved={savedApprovals[f.id] === "approve"}
+                commentErrors={commentErrors}
                 onApprovalChange={setApproval}
                 onCommentChange={setComment}
                 onDownload={downloadFile}
