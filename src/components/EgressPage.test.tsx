@@ -1,4 +1,6 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+/// <reference types="@testing-library/jest-dom" />
+
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { http, HttpResponse } from "msw";
@@ -140,13 +142,15 @@ describe("EgressPage", () => {
     const approvedFile = mockFiles[0];
     const unapprovedFile = mockFiles[1];
     const commentField = screen.getByTestId(`comment-${approvedFile.id}`);
-    const input = commentField.querySelector("input");
+    const input = within(commentField).getByRole('textbox');
+
     await userEvent.clear(input);
 
     await userEvent.type(input, "An example comment");
 
     const commentField2 = screen.getByTestId(`comment-${unapprovedFile.id}`);
-    const input2 = commentField2.querySelector("input");
+    const input2 = within(commentField2).getByRole('textbox');
+
     await userEvent.type(input2, "An example comment");
 
     await userEvent.click(screen.getByTestId("saveButton"));
@@ -265,10 +269,10 @@ describe("EgressPage", () => {
     const container = screen.getByTestId(`approval-${approvedFile.id}`);
 
     // Get radio buttons within this container
-    const rejectRadio = container.querySelector('input[value="reject"]');
-    await userEvent.click(rejectRadio);
+    const rejectRadio = within(container).getByRole('radio', { name: /reject/i });    await userEvent.click(rejectRadio);
     const commentField = screen.getByTestId(`comment-${approvedFile.id}`);
-    const input = commentField.querySelector("input");
+    const input = within(commentField).getByRole('textbox');
+
     await userEvent.clear(input);
 
     await userEvent.click(screen.getByTestId("saveButton"));
